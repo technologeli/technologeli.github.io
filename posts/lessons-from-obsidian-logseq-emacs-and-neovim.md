@@ -139,8 +139,7 @@ Electron and LSP.
 
 ## Part 3: Emacs
 
-![Emacs
-Logo](https://upload.wikimedia.org/wikipedia/commons/5/5f/Emacs-logo.svg)
+![Emacs Logo](https://upload.wikimedia.org/wikipedia/commons/5/5f/Emacs-logo.svg)
 
 ### The Alluring Features
 
@@ -200,10 +199,10 @@ Emacs really does have a function for everything - and if it doesn't, the
 
 ### The Drawback of Emacs
 
-There is only one drawback of Emacs: not everyone uses it. Because everyone has
-agreed on a terminal or a GUI, Emacs has to adapt and rely on packages to keep
-up with simple things like a terminal tool or a Microsoft protocol (LSP, for
-example).
+There is only one drawback of Emacs: not everyone uses it. Because
+everyone has agreed on a terminal or a GUI, Emacs has to adapt and rely on
+packages to keep up with simple things like a terminal tool or a Microsoft
+protocol (LSP, for example).
 
 Because not everyone uses Emacs, some of my requirements just don't work as
 well as they do in other environments. For example, Emacs' terminal support is
@@ -288,8 +287,7 @@ syncs like SMB.
 
 ## Part 4: Neovim
 
-![Neovim
-Logo](https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Neovim-logo.svg/1920px-Neovim-logo.svg.png)
+![Neovim Logo](https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Neovim-logo.svg/1920px-Neovim-logo.svg.png)
 
 ### The Standard Way (tmux)
 
@@ -389,11 +387,9 @@ Luckily for me, there's the [Kitty terminal graphic
 protocol](https://sw.kovidgoyal.net/kitty/graphics-protocol/), which Ghostty
 implements. Using `snacks.nvim` I can render images in Markdown:
 
-![Neovim
-Logo](https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Neovim-logo.svg/1920px-Neovim-logo.svg.png)
+![Neovim Logo](https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Neovim-logo.svg/1920px-Neovim-logo.svg.png)
 
-![Neovim Logo In Neovim
-Screenshot](/posts/neovim-logo-in-neovim-screenshot.png)
+![Neovim Logo In Neovim Screenshot](/posts/neovim-logo-in-neovim-screenshot.png)
 
 Everything Neovim-config related can be found on my
 [here](https://github.com/technologeli/dotfiles), on my GitHub!

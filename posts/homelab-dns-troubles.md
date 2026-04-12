@@ -26,8 +26,7 @@ These were pretty much my only goals at first.
 
 ## Attempt 1
 
-I got pretty far before I learned a few things that in hindsight felt pretty
-obvious:
+I got pretty far before I learned a few things that in hindsight felt pretty obvious:
 
 - Don't encrypt a drive of a service you want available on system reboot, such
   as, I don't know, Proxmox itself. Otherwise, you'll have to physically
@@ -41,8 +40,8 @@ To access my Proxmox instance, I created a Tailscale LXC and made it a [subnet
 router](https://tailscale.com/docs/features/subnet-routers) so that I wouldn't
 have to put Tailscale on the host or any other VM/LXC.
 
-Then, it came time to install Vaultwarden. I was very excited, until I learned
-I needed to self-sign certificates. Fortunately, `openssl` is very well
+Then, it came time to install Vaultwarden. I was very excited, until I
+learned I needed to self-sign certificates. Fortunately, `openssl` is very well
 documented and online tutorials and AI make up for my lack of patience.
 
 ## Certified shenanigans
@@ -65,8 +64,7 @@ public DNS A record to point his NPM subdomain to his private IP. He then
 created a wildcard CNAME record that pointed all other subdomains to his NPM
 subdomain.
 
-If you're like me and don't know what A and CNAME records are, see it like
-this:
+If you're like me and don't know what A and CNAME records are, see it like this:
 - An A record maps a domain or subdomain to an IP.
 - A CNAME record maps a subdomain to another domain or subdomain.
 - A wildcard is just a catch-all.

@@ -21,20 +21,44 @@ shuffle (and therefore a "lottery").
 
 `flag_lottery.py`
 
-```py #!/usr/bin/env python3 import secrets import random flag = "fake{flag}"
+```py
+#!/usr/bin/env python3
+import secrets
+import random
+flag = "fake{flag}"
 
-x = [*"%&()*,./:;>[]^{|}~"] # i deleted a bunch of characters because i just
-dislike them for being too cool. random.shuffle(x) charset = x[:4] print(f'your
-lucky numbers are: {", ".join([str(ord(i)) for i in charset])}') charset +=
-["_"] count = 0
+x = [*"%&()*,./:;>[]^{|}~"] # i deleted a bunch of characters because i just dislike them for being too cool.
+random.shuffle(x)
+charset = x[:4]
+print(f'your lucky numbers are: {", ".join([str(ord(i)) for i in charset])}')
+charset += ["_"]
+count = 0
 
-try: while count < 100: _ = secrets.token_bytes(128) secret = _ for z in
-range(1025): code = input("cmd: ") if code == "submit": if input("lottery
-numbers? ") == secret.hex(): count += 1 else: raise ValueError("the winning
-ticket was " + secret.hex()) elif any(i not in charset for i in code): raise
-ValueError("invalid cmd") else: try: eval(code) except: print("answering
-machine broke.") except Exception as err: print(err) if count == 100:
-print(f"you won! here is {flag:}") else: print("better luck next time!") ```
+try:
+    while count < 100:
+        _ = secrets.token_bytes(128)
+        secret = _
+        for z in range(1025):
+            code = input("cmd: ")
+            if code == "submit":
+                if input("lottery numbers? ") == secret.hex():
+                    count += 1
+                else:
+                    raise ValueError("the winning ticket was " + secret.hex())
+            elif any(i not in charset for i in code):
+                raise ValueError("invalid cmd")
+            else:
+                try:
+                    eval(code)
+                except:
+                    print("answering machine broke.")
+except Exception as err:
+    print(err)
+if count == 100:
+    print(f"you won! here is {flag:}")
+else:
+    print("better luck next time!")
+```
 
 Instead of importing the flag from another Python file, I modified the code to
 just have `fake{flag}` instead.
@@ -81,8 +105,7 @@ indexing, we could use `:` to get slices of the original 128 element array, or
 `,` to create arbitrary-size lists.
 
 To isolate bits, we needed one of the bit-wise operators: `&|^`. `|` would be a
-little hard, so `&` and `^` are our best bet here. We'd might need `>` to do
-bit shifting (`>>`), depending on our strategy.
+little hard, so `&` and `^` are our best bet here. We'd might need `>` to do bit shifting (`>>`), depending on our strategy.
 
 It turns out, we also need arbitrary numbers to index. This is a difficult
 problem since we aren't allowed any addition, and we don't have any numbers to
@@ -103,16 +126,17 @@ Finally, we will need a way to actually access bytes (integers) from the
 `bytes` object in Python. The only way to do this with the characters available
 is via indexing with `[]`.
 
-Research came up with a good indexing idea that didn't require numbers other
-than 1:
+Research came up with a good indexing idea that didn't require numbers other than 1:
 
 ```py
->>> _ = "abcd" _[1:]
+>>> _ = "abcd"
+>>> _[1:]
 'bcd'
 >>> _[1:][1:]
 'cd'
 >>> _[1:][1:][:1]
-'c' ```
+'c'
+```
 
 This would require `:`.
 
@@ -175,9 +199,24 @@ against bit shifted versions of itself. For example, say the first byte was
 195. Then the binary representation is `0b11000011`, and we can create 128 as
 follows:
 
-``` 11000011 ^  1100001 (195 >> 1) ---------- 10100010 ^   110000 (195 >> 2)
----------- 10010010 ^    11000 (195 >> 3) ---------- 10001010 ^     1100 (195
->> 4) ---------- 10000110 ^      110 (195 >> 5) ---------- 10000000 ```
+```
+  11000011
+^  1100001 (195 >> 1)
+----------
+  10100010
+^   110000 (195 >> 2)
+----------
+  10010010
+^    11000 (195 >> 3)
+----------
+  10001010
+^     1100 (195 >> 4)
+----------
+  10000110
+^      110 (195 >> 5)
+----------
+  10000000
+```
 
 I realized, shortly after, that `^` and `>` also gives us a way to use indexing
 to leak bits.
@@ -213,84 +252,162 @@ send a thousand `\n` all at once.
 This is also true per byte (and likely per secret, after the first bit check),
 so I optimized that as well.
 
-```py from pwn import * import time use_remote = True count = 0
+```py
+from pwn import *
+import time
+use_remote = True
+count = 0
 
-def expand_zero(s): return s.replace("0", "_>_")
+def expand_zero(s):
+    return s.replace("0", "_>_")
 
-def expand_parenthesis(s): s = s.replace("(", "[") return s.replace(")",
-"][0]")
+def expand_parenthesis(s):
+    s = s.replace("(", "[")
+    return s.replace(")", "][0]")
 
-def expand_one(s: str): return s.replace("1", "([_]>[])")
+def expand_one(s: str):
+    return s.replace("1", "([_]>[])")
 
-def expand_bitshift(s: str): for i in range(7, 1, -1): s =
-s.replace(">>"+str(i),">>1>>"+str(i-1)) return s.replace(">>0","")
+def expand_bitshift(s: str):
+    for i in range(7, 1, -1):
+        s = s.replace(">>"+str(i),">>1>>"+str(i-1))
+    return s.replace(">>0","")
 
-def generate_bit_test(index:str, bit_index): # MSB = 0 x =
-f"_[{index}]>>{7-bit_index}" if bit_index == 0: return f"[_][{x}]" elif
-bit_index == 7: return f"[_][_[{index}]>_[{index}]^1]" else: return
-f"[_][{x}>{x}^1]"
+def generate_bit_test(index:str, bit_index): # MSB = 0
+    x = f"_[{index}]>>{7-bit_index}"
+    if bit_index == 0:
+        return f"[_][{x}]"
+    elif bit_index == 7:
+        return f"[_][_[{index}]>_[{index}]^1]"
+    else:
+        return f"[_][{x}>{x}^1]"
 
-def generate_128(b): assert b >= 0b10000000 s = "_[0]^" x = b for i in range(6,
--1, -1): if ((x >> i) & 1) == 1: s += f"_[0]>>{7-i}^" x ^= b >> (7-i) return
-f"({s[:-1]})"
+def generate_128(b):
+    assert b >= 0b10000000
+    s = "_[0]^"
+    x = b
+    for i in range(6, -1, -1):
+        if ((x >> i) & 1) == 1:
+            s += f"_[0]>>{7-i}^"
+            x ^= b >> (7-i)
+    return f"({s[:-1]})"
 
-_128_table = { } for i in range(0b10000000, 0b11111111+1): _128_table[i] =
-generate_128(i)
+_128_table = { }
+for i in range(0b10000000, 0b11111111+1):
+    _128_table[i] = generate_128(i)
 
-def generate_any(first_byte, x): _128 = _128_table[first_byte] b = 0 s = "" for
-i in range(7, -1, -1): if ((x >> i) & 1) == 1: b ^= 128 >> (7-i) s +=
-f"{_128}>>{7-i}^" return f"({s[:-1]})"
+def generate_any(first_byte, x):
+    _128 = _128_table[first_byte]
+    b = 0
+    s = ""
+    for i in range(7, -1, -1):
+        if ((x >> i) & 1) == 1:
+            b ^= 128 >> (7-i)
+            s += f"{_128}>>{7-i}^"
+    return f"({s[:-1]})"
 
-def run_byte_test(io, first_byte, byte_index): print(f"Starting byte
-{byte_index}") start = time.time() index_payload = generate_any(first_byte,
-byte_index) bits = 0 ss = "" for i in range(8): s =
-generate_bit_test(index_payload, i) for f in [expand_bitshift, expand_one,
-expand_parenthesis, expand_zero]: s = f(s) ss += s + "\n" io.send(ss.encode())
-for i in range(8): bits <<= 1 line = io.recvuntil(b":") if b"broke" in line:
-bits |= 1 #     print(f"Byte {byte_index} bit {i}: 1") # else: #
-print(f"Byte {byte_index} bit {i}: 0") print(f"Count {count}, Byte
-{byte_index}: 0x{bits:02x}") print(f"Took {time.time()-start} seconds") return
-bits
+def run_byte_test(io, first_byte, byte_index):
+    print(f"Starting byte {byte_index}")
+    start = time.time()
+    index_payload = generate_any(first_byte, byte_index)
+    bits = 0
+    ss = ""
+    for i in range(8):
+        s = generate_bit_test(index_payload, i)
+        for f in [expand_bitshift, expand_one, expand_parenthesis, expand_zero]:
+            s = f(s)
+        ss += s + "\n"
+    io.send(ss.encode())
+    for i in range(8):
+        bits <<= 1
+        line = io.recvuntil(b":")
+        if b"broke" in line:
+            bits |= 1
+        #     print(f"Byte {byte_index} bit {i}: 1")
+        # else:
+        #     print(f"Byte {byte_index} bit {i}: 0")
+    print(f"Count {count}, Byte {byte_index}: 0x{bits:02x}")
+    print(f"Took {time.time()-start} seconds")
+    return bits
 
 
-if __name__ == "__main__": if use_remote: io = remote("challs3.pyjail.club",
-24908) else: io = process("flag_lottery.py") start = time.time()
-io.recvuntil(b":") lucky = io.recvline().decode().split(",") lucky_chars =
-set((map(lambda x: chr(int(x)), lucky))) while lucky_chars != set(">^[]"):
-io.close() print("bad chars", "".join(lucky_chars)) if use_remote: io =
-remote("challs3.pyjail.club", 24908) else: io = process("flag_lottery.py")
-io.recvuntil(b":") lucky = io.recvline().decode().split(",") lucky_chars =
-set((map(lambda x: chr(int(x)), lucky))) print(f"Time to get lucky:
-{time.time()-start} seconds") start = time.time()
+if __name__ == "__main__":
+    if use_remote:
+        io = remote("challs3.pyjail.club", 24908)
+    else:
+        io = process("flag_lottery.py")
+    start = time.time()
+    io.recvuntil(b":")
+    lucky = io.recvline().decode().split(",")
+    lucky_chars = set((map(lambda x: chr(int(x)), lucky)))
+    while lucky_chars != set(">^[]"):
+        io.close()
+        print("bad chars", "".join(lucky_chars))
+        if use_remote:
+            io = remote("challs3.pyjail.club", 24908)
+        else:
+            io = process("flag_lottery.py")
+        io.recvuntil(b":")
+        lucky = io.recvline().decode().split(",")
+        lucky_chars = set((map(lambda x: chr(int(x)), lucky)))
+    print(f"Time to get lucky: {time.time()-start} seconds")
+    start = time.time()
 
-    print("Lucky characters found, we're in") coinflip = False while count <
-    100: count_time = time.time() if not coinflip: io.recvuntil(b":") coinflip
-    = False bits = 0 # first byte first = time.time() for i in range(8): bits
-    <<= 1 s = generate_bit_test("0", i)
+    print("Lucky characters found, we're in")
+    coinflip = False
+    while count < 100:
+        count_time = time.time()
+        if not coinflip:
+            io.recvuntil(b":")
+        coinflip = False
+        bits = 0
+        # first byte
+        first = time.time()
+        for i in range(8):
+            bits <<= 1
+            s = generate_bit_test("0", i)
 
-            for f in [expand_bitshift, expand_one, expand_parenthesis,
-            expand_zero]: s = f(s) io.sendline(s.encode()) line =
-            io.recvuntil(b":") if i == 0 and b"broke" not in line: coinflip =
-            True break if b"broke" in line: bits |= 1 #     print(f"Byte 0 bit
-            {i}: 1") # else: #     print(f"Byte 0 bit {i}: 0") if coinflip:
-            coinflip_time = time.time() print("Lost coinflip, skipping...")
-            io.send(b"\n"*1024) for i in range(1024): io.recvuntil(b":")
+            for f in [expand_bitshift, expand_one, expand_parenthesis, expand_zero]:
+                s = f(s)
+            io.sendline(s.encode())
+            line = io.recvuntil(b":")
+            if i == 0 and b"broke" not in line:
+                coinflip = True
+                break
+            if b"broke" in line:
+                bits |= 1
+            #     print(f"Byte 0 bit {i}: 1")
+            # else:
+            #     print(f"Byte 0 bit {i}: 0")
+        if coinflip:
+            coinflip_time = time.time()
+            print("Lost coinflip, skipping...")
+            io.send(b"\n"*1024)
+            for i in range(1024):
+                io.recvuntil(b":")
             print(f"Done coinflip, {time.time()-coinflip_time} seconds")
-            continue print(f"Byte 0: 0x{bits:02x}") print(f"Took
-            {time.time()-first} seconds")
+            continue
+        print(f"Byte 0: 0x{bits:02x}")
+        print(f"Took {time.time()-first} seconds")
 
-        secret = [bits] # other bytes for i in range(1, 128):
-        secret.append(run_byte_test(io, bits, i)) io.sendline(b"submit")
-        io.sendline(bytes(secret).hex().encode()) count += 1 print("Count:",
-        count) print(f"Count time: {time.time()-count_time} seconds")
+        secret = [bits]
+        # other bytes
+        for i in range(1, 128):
+            secret.append(run_byte_test(io, bits, i))
+        io.sendline(b"submit")
+        io.sendline(bytes(secret).hex().encode())
+        count += 1
+        print("Count:", count)
+        print(f"Count time: {time.time()-count_time} seconds")
         print(f"Total time: {time.time()-start} seconds")
 
-    print(io.recvall()) io.close() print(f"Total: {time.time()-start} seconds")
-    ```
+    print(io.recvall())
+    io.close()
+    print(f"Total: {time.time()-start} seconds")
+```
 
 After running 8 connections using `tmux`, I went to take a shower, eat dinner,
 do dishes, and finally came back to watch the last few minutes of a solve.
 Based on the flag, this was the intended solution!
 
-Flag:
-`jail{[_[_>_]>>[[_]>[]][_>_]>>[[_]>[]][_>_]>>[[_]>[]][_>_]>>[[_]>[]][_>_]>>[[_]>[]][_>_]][_>_]^[[_[_>_]>>[[_]>[]][_>_]>>[[_]>[]][_>_]>>[[_]>[]][_>_]>>[[_]>[]][_>_]][_>_]^[[_[_>_]>>[[_]>[]][_>_]>>[[_]>[]][_>_]>>[[_]>[]][_>_]][_>_]^[[_[_>_]>>[[_]>[]][_>_]>>[[_]>[]][_>_]][_>_]^[[_[_>_]>>[[_]>[]][_>_]][_>_]^[[_]>[]][_>_]][_>_]][_>_]][_>_]][_>_]}`
+Flag: `jail{[_[_>_]>>[[_]>[]][_>_]>>[[_]>[]][_>_]>>[[_]>[]][_>_]>>[[_]>[]][_>_]>>[[_]>[]][_>_]][_>_]^[[_[_>_]>>[[_]>[]][_>_]>>[[_]>[]][_>_]>>[[_]>[]][_>_]>>[[_]>[]][_>_]][_>_]^[[_[_>_]>>[[_]>[]][_>_]>>[[_]>[]][_>_]>>[[_]>[]][_>_]][_>_]^[[_[_>_]>>[[_]>[]][_>_]>>[[_]>[]][_>_]][_>_]^[[_[_>_]>>[[_]>[]][_>_]][_>_]^[[_]>[]][_>_]][_>_]][_>_]][_>_]][_>_]}`
