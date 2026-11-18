@@ -9,6 +9,7 @@ I'm just using the default GitHub Pages system.
 
 - [DNS Troubles](/posts/homelab-dns-troubles.html)
 - [Lessons from Obsidian, Logseq, Emacs, and Neovim](/posts/lessons-from-obsidian-logseq-emacs-and-neovim.html)
+- [My Music Taste](/posts/my-music-taste.html)
 
 ## CTF
 
