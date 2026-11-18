@@ -10,7 +10,7 @@ For each artist, I've given at least two of the following songs:
 
 | Artist | Genre | Songs |
 |-|-|-|
-| Porter Robinson | EDM | [Everything Goes On], [Something Comforting](https://www.youtube.com/watch?v=IGrhyOtikQ0) |
+| Porter Robinson | EDM | [Everything Goes On](https://www.youtube.com/watch?v=izHyKdrSKvo), [Something Comforting](https://www.youtube.com/watch?v=IGrhyOtikQ0) |
 | Avenged Sevenfold | Metal | [Dear God](https://www.youtube.com/watch?v=mzX0rhF8buo), [Cosmic](https://www.youtube.com/watch?v=NxFE5YOErcg) |
 | xikers | K-Pop | [We Don't Stop](https://www.youtube.com/watch?v=fNMJbr9L57o), [Supercalifragilistic](https://www.youtube.com/watch?v=8JiLgz), [ICONIC](https://www.youtube.com/watch?v=tOtNwAO_q_4) |
 | EDEN | Indie Pop | [End Credits](https://www.youtube.com/watch?v=0pVABElms84), [Circles](https://www.youtube.com/watch?v=fP8ElyrwtEc) |
